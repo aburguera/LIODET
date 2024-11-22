@@ -48,8 +48,8 @@ globalParameters = {
     'SMALL_OBJECT_SIZE_LEVEL0': 1000,       # Min area for small objects
     'SMALL_HOLE_SIZE_LEVEL0': 1000,         # Min area for small holes
     'CLOSING_RADIUS_LEVEL0': 20,            # Radius for morphological closing
-    'DELTA_OVERLAP_LEVEL0': 1024,           # Max distance for bbox contiguity
-    'MAX_TOUCH_RATIO': 0.05,                # Max allowed ratio of edge pixels
+    'DELTA_OVERLAP_LEVEL0': 512,            # Max distance for bbox contiguity
+    'MAX_TOUCH_RATIO': 0.15,                # Max allowed ratio of edge pixels
     'MIN_AREA_LEVEL0': 4000,                # Min area for objects of interest
     'FLOOD_FILL_START': (0, 0),             # Seed point for background fill
     'GRID_CROP_MARGIN': 0.1                 # Margin to enlarge each crop area
@@ -307,8 +307,8 @@ def count_touches(theData):
 def check_mask(theMask,maxTouchRatio,minArea):
     # Check if there is exactly one foreground blob plus the background.
     # This ensures that only one blob object is detected in the mask.
-    if len(np.unique(label(theMask,connectivity=2)))!=2:
-        return False
+    #if len(np.unique(label(theMask,connectivity=2)))!=2:
+    #    return False
     # Check the ratio of the image boundary containing blob pixels (foreground).
     # If too many boundary pixels contain blob, it may indicate improper cropping at the image edges.
     if (np.sum(theMask[0,:])+np.sum(theMask[-1,:])+np.sum(theMask[:,0])+np.sum(theMask[:,-1]))/((theMask.shape[0]+theMask.shape[1])*2)>=maxTouchRatio:
@@ -428,6 +428,8 @@ def grid_crop(theImage,cropSize,gaussianBlurSigma,floodFillStart,theMargin):
 #
 # Input  : ndpiData         - OpenSlide object with NDPI image data.
 #          globalParameters - dict, global parameters
+#          theThreshold     - External binarization threshold. If none, it is
+#                             computed here using Otsu's method.
 #
 # Output : outBinaryCrops   - list, processed binary mask and bounding boxes.
 #                             Each list item is:
@@ -447,7 +449,7 @@ def grid_crop(theImage,cropSize,gaussianBlurSigma,floodFillStart,theMargin):
 #                               1 - Correct, detected during the second step.
 #                               2 - Incorrect. Some checks in check_mask failed.
 # =============================================================================
-def get_blobs(ndpiData,globalParameters):
+def get_blobs(ndpiData,globalParameters,theThreshold=None):
     # Get the parameters
     ndpiLevelLores=globalParameters['NDPI_LEVEL_LORES']
     ndpiLevelHires=globalParameters['NDPI_LEVEL_HIRES']
@@ -464,7 +466,9 @@ def get_blobs(ndpiData,globalParameters):
     # Convert parameters from level 0 to ndpiLevelLores
     [loresCropSize,loresGaussianBlurSigma,_,_,_,_,_]=convert_parameters(ndpiLevelLores,globalParameters,ndpiData)
     # Get the crops
-    loresCropList,loresMask,loresOutPixels,theThreshold=grid_crop(loresImage,loresCropSize,loresGaussianBlurSigma,floodFillStart,gridCropMargin)
+    loresCropList,loresMask,loresOutPixels,cropThreshold=grid_crop(loresImage,loresCropSize,loresGaussianBlurSigma,floodFillStart,gridCropMargin)
+    if theThreshold is None:
+        theThreshold=cropThreshold
     # Convert crops to level 0 resolution. Only rStart,cStart are required (height and width are hiresCropSize).
     # These coordinates will be used by read_region, which requires them to be in level 0 scale.
     lvl0CropList=np.array([convert_coordinates(curCrop[:2],ndpiLevelLores,0,ndpiData) for curCrop in loresCropList])
