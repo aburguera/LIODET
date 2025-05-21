@@ -50,7 +50,7 @@ globalParameters = {
     'SMALL_HOLE_SIZE_LEVEL0': 1000,         # Min area for small holes
     'CLOSING_RADIUS_LEVEL0': 20,            # Radius for morphological closing
     'DELTA_OVERLAP_LEVEL0': 512,            # Max distance for bbox contiguity
-    'MAX_TOUCH_RATIO': 0.15,                # Max allowed ratio of edge pixels
+    'MAX_TOUCH_RATIO': 0.25,                # Max allowed ratio of edge pixels
     'MIN_AREA_LEVEL0': 4000,                # Min area for objects of interest
     'FLOOD_FILL_START': (0, 0),             # Seed point for background fill
     'GRID_CROP_MARGIN': 0.1                 # Margin to enlarge each crop area
